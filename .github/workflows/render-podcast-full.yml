@@ -1,0 +1,219 @@
+name: render-podcast-full
+
+# Full run PODCAST ANIMASI 3D "Masa Depan AI" (Eevee, 9:16 540x960, samples 8):
+#   frame Blender 1-1440 (20 job x 72 frame, paralel).
+#   Frame Blender = timing.json f + 1 (f 0-1439).
+# Pipeline podcast di pipeline-podcast/ + audio/timing.json + podcast-words.json.
+# Tiap job zip frame-nya lalu upload sebagai release asset ke release yang
+# namanya diisi di input `release_tag` pakai `gh release upload`.
+# Release podcast-full-run-20261121 DIBUAT DULU dari luar (sebelum trigger).
+# Download Blender: curl -fSL + cek ukuran >200 MB + fallback mirror OCF
+# Berkeley (halaman error 61 KB pernah lolos tanpa -f di farm Nexus).
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Nama release GitHub yang SUDAH dibuat dulu dari luar (20 job upload zip chunk ke sini)"
+        required: true
+        type: string
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 9x16-a
+            res_x: 540
+            res_y: 960
+            start: 1
+            end: 72
+          - name: 9x16-b
+            res_x: 540
+            res_y: 960
+            start: 73
+            end: 144
+          - name: 9x16-c
+            res_x: 540
+            res_y: 960
+            start: 145
+            end: 216
+          - name: 9x16-d
+            res_x: 540
+            res_y: 960
+            start: 217
+            end: 288
+          - name: 9x16-e
+            res_x: 540
+            res_y: 960
+            start: 289
+            end: 360
+          - name: 9x16-f
+            res_x: 540
+            res_y: 960
+            start: 361
+            end: 432
+          - name: 9x16-g
+            res_x: 540
+            res_y: 960
+            start: 433
+            end: 504
+          - name: 9x16-h
+            res_x: 540
+            res_y: 960
+            start: 505
+            end: 576
+          - name: 9x16-i
+            res_x: 540
+            res_y: 960
+            start: 577
+            end: 648
+          - name: 9x16-j
+            res_x: 540
+            res_y: 960
+            start: 649
+            end: 720
+          - name: 9x16-k
+            res_x: 540
+            res_y: 960
+            start: 721
+            end: 792
+          - name: 9x16-l
+            res_x: 540
+            res_y: 960
+            start: 793
+            end: 864
+          - name: 9x16-m
+            res_x: 540
+            res_y: 960
+            start: 865
+            end: 936
+          - name: 9x16-n
+            res_x: 540
+            res_y: 960
+            start: 937
+            end: 1008
+          - name: 9x16-o
+            res_x: 540
+            res_y: 960
+            start: 1009
+            end: 1080
+          - name: 9x16-p
+            res_x: 540
+            res_y: 960
+            start: 1081
+            end: 1152
+          - name: 9x16-q
+            res_x: 540
+            res_y: 960
+            start: 1153
+            end: 1224
+          - name: 9x16-r
+            res_x: 540
+            res_y: 960
+            start: 1225
+            end: 1296
+          - name: 9x16-s
+            res_x: 540
+            res_y: 960
+            start: 1297
+            end: 1368
+          - name: 9x16-t
+            res_x: 540
+            res_y: 960
+            start: 1369
+            end: 1440
+    env:
+      FS_SAMPLES: "8"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Mesa/EGL + DejaVu font + zip
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1-mesa-dri libglx-mesa0 fonts-dejavu-core zip
+          ldconfig -p | grep libEGL
+          zip -v | head -2
+
+      - name: Restore cached Blender
+        id: cache-blender
+        uses: actions/cache@v4
+        with:
+          path: blender-4.5.3-linux-x64
+          key: blender-4.5.3-linux-x64
+
+      - name: Download Blender 4.5.3 LTS (cache miss only, with retries)
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          URLS=(
+            "https://download.blender.org/release/Blender4.5/blender-4.5.3-linux-x64.tar.xz"
+            "https://mirrors.ocf.berkeley.edu/blender/release/Blender4.5/blender-4.5.3-linux-x64.tar.xz"
+          )
+          OK=0
+          for URL in "${URLS[@]}"; do
+            for i in 1 2 3; do
+              echo "Download attempt $i from $URL"
+              if curl -fSL --retry 3 --retry-delay 10 --retry-all-errors \
+                  -o blender.tar.xz "$URL" \
+                  && [ "$(stat -c%s blender.tar.xz)" -gt 200000000 ] \
+                  && tar -tf blender.tar.xz >/dev/null; then
+                echo "Download OK: $URL attempt $i ($(stat -c%s blender.tar.xz) bytes)"
+                OK=1
+                break 2
+              fi
+              echo "Download attempt $i from $URL failed, retrying in 30s..."
+              rm -f blender.tar.xz
+              sleep 30
+            done
+          done
+          if [ "$OK" != 1 ]; then echo "FAIL: Blender download failed (primer + mirror)"; exit 1; fi
+          tar -xf blender.tar.xz
+          ./blender-4.5.3-linux-x64/blender --version
+
+      - name: Render frames
+        run: |
+          START=${{ matrix.start }}
+          END=${{ matrix.end }}
+          EXPECTED=$((END - START + 1))
+          echo "Chunk ${{ matrix.name }}: frames $START-$END ($EXPECTED frames)"
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          S=$(date +%s)
+          # NOTE: keberhasilan dinilai dari FILE FRAME, bukan exit code Blender —
+          # Mesa bisa segfault saat teardown SETELAH semua frame tersimpan.
+          ./blender-4.5.3-linux-x64/blender -b --factory-startup \
+            -P pipeline-podcast/animate_podcast.py -- "$GITHUB_WORKSPACE/out" \
+            --start $START --end $END \
+            --res ${{ matrix.res_x }} ${{ matrix.res_y }} || echo "blender exited rc=$?"
+          E=$(date +%s)
+          N=$(ls "$GITHUB_WORKSPACE/out"/f_*.png 2>/dev/null | wc -l)
+          echo "CHUNK=${{ matrix.name }} FRAMES=$N/$EXPECTED SECS=$((E-S))" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$N" -lt "$EXPECTED" ]; then echo "FAIL: only $N/$EXPECTED frames rendered"; exit 1; fi
+
+      - name: Zip + upload chunk to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHUNK: ${{ matrix.name }}
+          START: ${{ matrix.start }}
+          END: ${{ matrix.end }}
+        run: |
+          set -euo pipefail
+          EXPECTED=$((END - START + 1))
+          cd "$GITHUB_WORKSPACE/out"
+          zip -q "../${CHUNK}.zip" f_*.png
+          cd "$GITHUB_WORKSPACE"
+          ZIPSIZE=$(stat -c%s "${CHUNK}.zip")
+          ZIPSIZE_MB=$((ZIPSIZE / 1024 / 1024))
+          INZIP=$(unzip -l "${CHUNK}.zip" | grep -c 'f_[0-9]*\.png')
+          echo "CHUNK=$CHUNK ZIP=${ZIPSIZE_MB}MB FILES_IN_ZIP=$INZIP/$EXPECTED" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$ZIPSIZE" -ge 2147483648 ]; then echo "FAIL: zip >= 2 GB ($ZIPSIZE bytes)"; exit 1; fi
+          if [ "$INZIP" -lt "$EXPECTED" ]; then echo "FAIL: zip holds $INZIP, expected $EXPECTED"; exit 1; fi
+          # Release (input release_tag) dibuat dulu dari luar sebelum trigger,
+          # jadi 20 job paralel tinggal upload (clobber = timpa kalau re-run).
+          gh release upload "${{ inputs.release_tag }}" "${CHUNK}.zip" --clobber
+          gh release view "${{ inputs.release_tag }}" --json assets \
+            --jq ".assets[] | select(.name == \"${CHUNK}.zip\") | .name + \" \" + (.size|tostring)"
