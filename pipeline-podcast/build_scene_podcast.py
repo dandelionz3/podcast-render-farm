@@ -90,7 +90,7 @@ WALL_M = mat("Wall", (0.09, 0.04, 0.05), 0.9)            # v2: dinding merah-hit
 PANEL_M = mat("Panel", (0.30, 0.04, 0.05), 0.95)        # v2: panel akustik merah gelap
 PANEL_M2 = mat("Panel2", (0.07, 0.05, 0.06), 0.95)      # v2: panel hampir hitam
 CHAIR_M = mat("Chair", (0.12, 0.05, 0.06), 0.6)         # v2: kursi merah-hitam
-CARPET_M = mat("Carpet", (0.30, 0.03, 0.04), 0.95)      # v2: karpet merah gelap
+CARPET_M = mat("Carpet", (0.20, 0.03, 0.04), 0.95)      # v2: karpet merah gelap
 METAL = mat("Metal", (0.15, 0.15, 0.16), 0.35, metal=0.8)
 MIC_M = mat("Mic", (0.08, 0.08, 0.09), 0.4, metal=0.6)
 FOAM_M = mat("MicFoam", (0.05, 0.05, 0.06), 0.9)
@@ -100,7 +100,7 @@ MUG_M = mat("Mug", (0.85, 0.55, 0.20), 0.5)
 SIGN_M = emissive("SignGlow", (1.0, 0.10, 0.08), 2.2)   # v2: sign merah menyala
 SIGN_M2 = emissive("SignGlow2", (1.0, 0.08, 0.08), 1.8)  # v2: bar merah
 REDGLOW_M = emissive("RedGlow", (1.0, 0.08, 0.08), 1.6)  # v2: strip cahaya merah
-HALO_M = emissive("HaloRed", (0.7, 0.04, 0.04), 0.9)     # v2: halo merah di balik sign
+HALO_M = emissive("HaloRed", (0.7, 0.04, 0.04), 0.55)    # v2: halo merah di balik sign (redup — sign harus terbaca)
 PAPER_M = mat("Paper", (0.92, 0.90, 0.84), 0.7)
 
 
@@ -419,7 +419,7 @@ reg(text_obj("SignTitle", "MASA DEPAN AI", (-2.05, 0, 2.35), 0.34, SIGN_M,
              (math.radians(90), 0, math.radians(90))))
 reg(block("SignBar", (-2.08, 0, 2.02), (0.04, 1.7, 0.06), SIGN_M2))
 # v2: halo merah di balik sign + bar cahaya vertikal mengapit sign + garis cahaya lantai
-reg(cylinder("SignHalo", (-2.09, 0, 2.35), 0.85, 0.03, HALO_M,
+reg(cylinder("SignHalo", (-2.09, 0, 2.35), 0.75, 0.03, HALO_M,
              rot=(0, math.radians(90), 0)))
 reg(block("LightBarL", (-2.07, -1.15, 2.35), (0.04, 0.07, 1.5), REDGLOW_M))
 reg(block("LightBarR", (-2.07, 1.15, 2.35), (0.04, 0.07, 1.5), REDGLOW_M))
@@ -484,7 +484,7 @@ def area_light(name, loc, color, energy, size, rot, shadow=False):
 # key hangat dari arah kamera twoshot (+X), fill hangat dari atas, rim MERAH dari backdrop
 area_light("KeyWarm", (2.2, 0, 2.2), (1.0, 0.82, 0.60), 220.0, 1.6, (math.radians(55), 0, math.radians(-90)))
 area_light("FillTop", (0, 0, 3.0), (0.95, 0.75, 0.72), 80.0, 2.0, (math.radians(10), 0, 0))
-point_light("RimRed", (-1.6, 0, 2.0), (1.0, 0.10, 0.12), 220.0)
+point_light("RimRed", (-1.0, 0, 2.0), (1.0, 0.10, 0.12), 120.0)
 point_light("FaceWarm", (1.2, 0, 1.4), (1.0, 0.85, 0.65), 60.0)
 # v2: semburan merah dari kolom — membasuh backdrop
 point_light("WashL", (-1.7, -2.2, 2.4), (1.0, 0.08, 0.08), 90.0)
