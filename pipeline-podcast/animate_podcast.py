@@ -1,4 +1,9 @@
-# animate_podcast.py — Animasi PODCAST "Masa Depan AI" (FASE 2, final).
+# animate_podcast.py — Animasi PODCAST "Masa Depan AI" (FASE 2, final; v2 21 Nov 2026).
+# v2: KAMERA TENANG (user: gerakan kamera v1 "terlalu muter", bikin pusing).
+# Semua line = SATU twoshot statis, tanpa close-up, tanpa cut kamera selama
+# dialog; satu-satunya cut: ke twoshot-wide-endcard di outro (51.153 dtk).
+# Gap antar line = ilustrasi bergerak (frame gap diganti frame ilustrasi di
+# assembly pasca-render — di render ini gap tetap twoshot, tidak dipakai).
 # Pola: animate_nexus_ep3.py — exec build_scene_podcast.py (tanpa still),
 # keyframe rig + kamera + mulut tiap frame dari audio/timing.json +
 # audio/podcast-words.json (lip-sync per kata), lalu render per rentang.
@@ -7,13 +12,13 @@
 #   9:16 Eevee: --res 540 960 ; 16:9 Cycles: --res 960 540 --engine cycles
 #   Frame Blender = f + 1 (timing.json f 0-based). --start/--end = nomor frame Blender.
 #   Cycles: device GPU, samples 32, denoise OPENIMAGEDENOISE (pola Nexus Ep 3).
-# Aturan shot (dari timing.json):
-#   line  -> closeup-nara / closeup-bimo (kamera depan pembicara, 3/4)
-#   gap   -> twoshot (kamera samping +X, keduanya profil)
-#   outro 51.153-60 -> twoshot-wide-endcard (twoshot ditarik mundur)
-# Gerakan: anggukan kepala saat bicara (sin per kata), mulut buka saat kata
-# aktif (skala Z mulut), listener menoleh + angguk kecil saat gap, gestur
-# tangan kanan sesekali di awal line Bimo (angkat siku).
+# Aturan shot v2 (dari timing.json):
+#   line  -> twoshot (SATU kamera statis untuk semua dialog)
+#   gap   -> illustration (di assembly diganti ilustrasi bergerak)
+#   outro 51.153-60 -> twoshot-wide-endcard (SATU cut keras di 51.153, tanpa gerak)
+# Gerakan: anggukan kepala PELAN saat bicara (amplitudo + frekuensi kecil),
+# mulut buka saat kata aktif (skala Z mulut), listener menoleh SEDIKIT +
+# angguk pelan saat gap, gestur tangan kanan Bimo pelan di awal line-nya.
 # Lip-sync: pembicara mulut ditentukan dari podcast-words.json (kata aktif),
 # BUKAN batas line timing.json — timestamp kata Whisper melebar ~0.3-0.45 dtk
 # melewati batas line, jadi mulut mengikuti kata langsung (peta kata->line
@@ -66,10 +71,9 @@ lines = timing["lines"]
 gaps = timing["gaps"]
 
 # ---------- kamera per shot (posisi + target + lens) ----------
-# Close-up: kamera di sisi lawan pembicara (3/4), mic di tepi frame, bukan tengah.
+# v2: HANYA twoshot + wide-endcard. Tidak ada close-up (itulah yang bikin
+# kamera v1 terasa "muter": cut keras antar sudut berlawanan tiap line).
 CAM_SHOTS = {
-    "closeup-nara": ((0.9, -0.9, 1.40), (0, 0.55, 1.32), 50),
-    "closeup-bimo": ((-0.9, 0.9, 1.50), (0, -0.55, 1.45), 50),
     "twoshot": ((3.3, 0.1, 1.25), (0, 0, 0.95), 40),
     "twoshot-wide-endcard": ((4.2, 0.2, 1.45), (0, 0, 0.95), 36),
 }
@@ -95,9 +99,8 @@ for _prefix in ("NARA", "BIMO"):
 
 
 def set_mic_visibility(shot, frame):
-    """Mic lawan bicara disembunyikan saat close-up (dia dekat kamera dan
-    membesar di foreground menutupi muka); di twoshot keduanya tampil.
-    Cut keras antar shot -> sembunyi/muncul tidak terlihat."""
+    """v2: shot selalu twoshot/wide — kedua mic tampil. Fungsi dipertahankan
+    (tidak ada close-up lagi, jadi hide selalu None)."""
     hide = {"closeup-nara": "BIMO", "closeup-bimo": "NARA"}.get(shot)
     for prefix, objs in MIC_SETS.items():
         for o in objs:
@@ -172,33 +175,37 @@ for f in range(START - 1, END):
     bf = f + 1  # frame Blender
     t = f / FPS
     shot = shot_at(f)
+    # v2: gap "illustration" dirender sebagai twoshot (framenya diganti
+    # ilustrasi di assembly) — kamera TIDAK PERNAH pindah dari twoshot
+    # kecuali satu cut ke wide-endcard di outro.
+    cam_shot = "twoshot" if shot == "illustration" else shot
     spk = speaker_at(f)        # cut kamera: batas line
     wspk, wactive = word_speaker_at(t)  # mulut/angguk: kata aktif
-    if shot != prev_shot:
-        set_cam(shot)
+    if cam_shot != prev_shot:
+        set_cam(cam_shot)
         # WAJIB keyframe lokasi+rotasi+lensa kamera (bukan cuma set nilai):
         # key(cam, bf) tanpa loc/rot tidak menyisipkan keyframe apa pun,
         # kamera diam di posisi set_cam terakhir untuk SEMUA frame.
         key(cam, bf, loc=cam.location.copy(), rot=cam.rotation_euler.copy())
         cam.data.keyframe_insert(data_path="lens", frame=bf)
         cam.data.keyframe_insert(data_path="dof.focus_distance", frame=bf)
-        set_mic_visibility(shot, bf)
-        prev_shot = shot
-    # --- kepala: pembicara angguk per kata, listener menoleh saat gap ---
+        set_mic_visibility(cam_shot, bf)
+        prev_shot = cam_shot
+    # --- kepala: v2 PELAN — angguk kecil + lambat, menoleh sedikit ---
     for prefix, name in (("NARA", "Nara"), ("BIMO", "Bimo")):
         head = RIGS[prefix]["head"]
         if wspk == name and wactive:
-            # angguk: sin cepat selama kata aktif, diam di sela kata
-            nod = 0.10 * math.sin(t * 9.0)
+            # angguk pelan selama kata aktif (dulu 0.10*sin(t*9) — terlalu cepat)
+            nod = 0.06 * math.sin(t * 5.0)
             turn = 0.0
         elif spk is None:
-            # gap: listener menoleh ke lawan bicara + angguk kecil pelan
-            turn = 0.35 if name == "Nara" else -0.35
-            nod = 0.05 * math.sin(t * 3.0)
+            # gap: listener menoleh sedikit + angguk pelan
+            turn = 0.15 if name == "Nara" else -0.15
+            nod = 0.03 * math.sin(t * 2.0)
         else:
             # mendengarkan: menoleh sedikit + angguk pelan sesekali
-            turn = 0.18 if name == "Nara" else -0.18
-            nod = 0.03 * math.sin(t * 2.0)
+            turn = 0.10 if name == "Nara" else -0.10
+            nod = 0.02 * math.sin(t * 1.5)
         key(head, bf, rot=(nod, 0, turn))
         # --- mulut: buka (skala Z) saat kata aktif, tutup saat diam ---
         mouth = CHARS[prefix]["mouth"]
@@ -206,12 +213,12 @@ for f in range(START - 1, END):
             key(mouth, bf, scale=(1.0, 1.0, 2.6))
         else:
             key(mouth, bf, scale=(1.0, 1.0, 1.0))
-    # --- gestur: tangan kanan Bimo terangkat sedikit di 0.5 dtk pertama tiap line-nya ---
+    # --- gestur: tangan kanan Bimo terangkat PELAN di 0.5 dtk pertama tiap line-nya ---
     armR = RIGS["BIMO"]["elbR"]
     gesture = 0.0
     for ln in lines:
         if ln["speaker"] == "Bimo" and ln["start_frame"] <= f <= ln["start_frame"] + 12:
-            gesture = -0.5 * math.sin(math.pi * (f - ln["start_frame"]) / 12.0)
+            gesture = -0.3 * math.sin(math.pi * (f - ln["start_frame"]) / 12.0)
     key(armR, bf, rot=(-math.pi / 2 * 0.9 + gesture, 0, 0))
     # lengan kiri Bimo & kedua lengan Nara: tetap di meja (pose_seated)
     key(RIGS["BIMO"]["elbL"], bf, rot=(-math.pi / 2 * 0.9, 0, 0))

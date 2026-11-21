@@ -11,7 +11,7 @@
    "end": 5.694,
    "start_frame": 48,
    "end_frame": 137,
-   "shot": "closeup-nara"
+   "shot": "twoshot"
   },
   {
    "speaker": "Bimo",
@@ -20,7 +20,7 @@
    "end": 14.896,
    "start_frame": 185,
    "end_frame": 358,
-   "shot": "closeup-bimo"
+   "shot": "twoshot"
   },
   {
    "speaker": "Nara",
@@ -29,7 +29,7 @@
    "end": 18.573,
    "start_frame": 406,
    "end_frame": 446,
-   "shot": "closeup-nara"
+   "shot": "twoshot"
   },
   {
    "speaker": "Bimo",
@@ -38,7 +38,7 @@
    "end": 27.889,
    "start_frame": 494,
    "end_frame": 669,
-   "shot": "closeup-bimo"
+   "shot": "twoshot"
   },
   {
    "speaker": "Nara",
@@ -47,7 +47,7 @@
    "end": 33.3,
    "start_frame": 717,
    "end_frame": 799,
-   "shot": "closeup-nara"
+   "shot": "twoshot"
   },
   {
    "speaker": "Bimo",
@@ -56,7 +56,7 @@
    "end": 41.206,
    "start_frame": 847,
    "end_frame": 989,
-   "shot": "closeup-bimo"
+   "shot": "twoshot"
   },
   {
    "speaker": "Nara",
@@ -65,7 +65,7 @@
    "end": 44.715,
    "start_frame": 1037,
    "end_frame": 1073,
-   "shot": "closeup-nara"
+   "shot": "twoshot"
   },
   {
    "speaker": "Bimo",
@@ -74,44 +74,44 @@
    "end": 51.153,
    "start_frame": 1133,
    "end_frame": 1228,
-   "shot": "closeup-bimo"
+   "shot": "twoshot"
   }
  ],
  "gaps": [
   {
    "start": 5.694,
    "end": 7.694,
-   "shot": "twoshot"
+   "shot": "illustration"
   },
   {
    "start": 14.896,
    "end": 16.897,
-   "shot": "twoshot"
+   "shot": "illustration"
   },
   {
    "start": 18.573,
    "end": 20.573,
-   "shot": "twoshot"
+   "shot": "illustration"
   },
   {
    "start": 27.889,
    "end": 29.89,
-   "shot": "twoshot"
+   "shot": "illustration"
   },
   {
    "start": 33.3,
    "end": 35.3,
-   "shot": "twoshot"
+   "shot": "illustration"
   },
   {
    "start": 41.206,
    "end": 43.206,
-   "shot": "twoshot"
+   "shot": "illustration"
   },
   {
    "start": 44.715,
    "end": 47.215,
-   "shot": "twoshot"
+   "shot": "illustration"
   },
   {
    "start": 51.153,

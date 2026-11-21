@@ -46,8 +46,8 @@ world = bpy.data.worlds.new("World")
 scene.world = world
 world.use_nodes = True
 bg = world.node_tree.nodes["Background"]
-bg.inputs["Color"].default_value = (0.10, 0.09, 0.10, 1.0)
-bg.inputs["Strength"].default_value = 0.5
+bg.inputs["Color"].default_value = (0.06, 0.02, 0.03, 1.0)  # v2: merah-hitam
+bg.inputs["Strength"].default_value = 0.6
 
 
 def mat(name, rgb, rough=0.45, metal=0.0):
@@ -85,19 +85,22 @@ EYE_BIMO = mat("EyeBimo", (0.04, 0.04, 0.03), 0.2)
 MOUTH_M = mat("MouthM", (0.45, 0.15, 0.18), 0.4)
 WOOD = mat("Wood", (0.32, 0.20, 0.11), 0.6)
 WOOD_DARK = mat("WoodDark", (0.20, 0.13, 0.08), 0.6)
-FLOOR_M = mat("Floor", (0.28, 0.19, 0.12), 0.7)
-WALL_M = mat("Wall", (0.16, 0.18, 0.20), 0.9)
-PANEL_M = mat("Panel", (0.10, 0.23, 0.26), 0.95)        # panel akustik teal gelap
-PANEL_M2 = mat("Panel2", (0.24, 0.22, 0.20), 0.95)
-CHAIR_M = mat("Chair", (0.18, 0.16, 0.15), 0.6)
+FLOOR_M = mat("Floor", (0.13, 0.05, 0.06), 0.7)          # v2: lantai merah-hitam
+WALL_M = mat("Wall", (0.09, 0.04, 0.05), 0.9)            # v2: dinding merah-hitam
+PANEL_M = mat("Panel", (0.30, 0.04, 0.05), 0.95)        # v2: panel akustik merah gelap
+PANEL_M2 = mat("Panel2", (0.07, 0.05, 0.06), 0.95)      # v2: panel hampir hitam
+CHAIR_M = mat("Chair", (0.12, 0.05, 0.06), 0.6)         # v2: kursi merah-hitam
+CARPET_M = mat("Carpet", (0.30, 0.03, 0.04), 0.95)      # v2: karpet merah gelap
 METAL = mat("Metal", (0.15, 0.15, 0.16), 0.35, metal=0.8)
 MIC_M = mat("Mic", (0.08, 0.08, 0.09), 0.4, metal=0.6)
 FOAM_M = mat("MicFoam", (0.05, 0.05, 0.06), 0.9)
 POT_M = mat("Pot", (0.55, 0.30, 0.15), 0.7)
 LEAF_M = mat("Leaf", (0.12, 0.35, 0.16), 0.7)
 MUG_M = mat("Mug", (0.85, 0.55, 0.20), 0.5)
-SIGN_M = emissive("SignGlow", (1.0, 0.75, 0.35), 1.6)   # sign hangat
-SIGN_M2 = emissive("SignGlow2", (0.35, 0.85, 1.0), 1.2)
+SIGN_M = emissive("SignGlow", (1.0, 0.10, 0.08), 2.2)   # v2: sign merah menyala
+SIGN_M2 = emissive("SignGlow2", (1.0, 0.08, 0.08), 1.8)  # v2: bar merah
+REDGLOW_M = emissive("RedGlow", (1.0, 0.08, 0.08), 1.6)  # v2: strip cahaya merah
+HALO_M = emissive("HaloRed", (0.7, 0.04, 0.04), 0.9)     # v2: halo merah di balik sign
 PAPER_M = mat("Paper", (0.92, 0.90, 0.84), 0.7)
 
 
@@ -397,18 +400,30 @@ def reg(o):
 
 # ---------- STUDIO ----------
 reg(block("Floor", (0, 0, -0.05), (7, 6, 0.1), FLOOR_M))
-# backdrop wall di -X (latar twoshot dari kamera +X) + panel akustik
-reg(block("Backdrop", (-2.2, 0, 1.5), (0.15, 5.0, 3.0), WALL_M))
+# v2: karpet merah gelap di bawah meja (tipis — sepatu karakter tetap di atasnya)
+reg(block("Carpet", (0.6, 0, 0.006), (2.6, 1.7, 0.012), CARPET_M))
+# backdrop wall di -X (latar twoshot dari kamera +X) + panel akustik — v2 LEBIH TINGGI (4.4 m)
+reg(block("Backdrop", (-2.2, 0, 2.2), (0.15, 5.6, 4.4), WALL_M))
 for i, py in enumerate((-1.8, -0.9, 0.0, 0.9, 1.8)):
-    reg(block(f"Panel{i}", (-2.11, py, 1.5), (0.06, 0.72, 2.2),
+    reg(block(f"Panel{i}", (-2.11, py, 2.0), (0.06, 0.80, 3.2),
               PANEL_M if i % 2 == 0 else PANEL_M2))
-# dinding samping (belakang Nara / belakang Bimo)
-reg(block("WallNara", (0, 1.9, 1.5), (5.0, 0.15, 3.0), WALL_M))
-reg(block("WallBimo", (0, -1.9, 1.5), (5.0, 0.15, 3.0), WALL_M))
-# sign "MASA DEPAN AI" di backdrop (menghadap +X), + garis cyan di bawahnya
+# dinding samping (belakang Nara / belakang Bimo) — v2 lebih tinggi
+reg(block("WallNara", (0, 1.9, 2.2), (5.6, 0.15, 4.4), WALL_M))
+reg(block("WallBimo", (0, -1.9, 2.2), (5.6, 0.15, 4.4), WALL_M))
+# v2: kolom megah mengapit backdrop + strip cahaya merah di sisinya
+for _sy in (-2.5, 2.5):
+    reg(block(f"Column{_sy}", (-2.05, _sy, 2.0), (0.22, 0.4, 4.0), PANEL_M2))
+    reg(block(f"ColumnGlow{_sy}", (-1.92, _sy, 2.0), (0.04, 0.08, 3.6), REDGLOW_M))
+# sign "MASA DEPAN AI" di backdrop (menghadap +X), + garis merah di bawahnya
 reg(text_obj("SignTitle", "MASA DEPAN AI", (-2.05, 0, 2.35), 0.34, SIGN_M,
              (math.radians(90), 0, math.radians(90))))
 reg(block("SignBar", (-2.08, 0, 2.02), (0.04, 1.7, 0.06), SIGN_M2))
+# v2: halo merah di balik sign + bar cahaya vertikal mengapit sign + garis cahaya lantai
+reg(cylinder("SignHalo", (-2.09, 0, 2.35), 0.85, 0.03, HALO_M,
+             rot=(0, math.radians(90), 0)))
+reg(block("LightBarL", (-2.07, -1.15, 2.35), (0.04, 0.07, 1.5), REDGLOW_M))
+reg(block("LightBarR", (-2.07, 1.15, 2.35), (0.04, 0.07, 1.5), REDGLOW_M))
+reg(block("FloorGlow", (-2.05, 0, 0.12), (0.04, 3.6, 0.05), REDGLOW_M))
 # meja bundar kayu di tengah (radius 0.62: tepi tepat di dada pembicara)
 reg(cylinder("TableTop", (0, 0, 0.72), 0.62, 0.06, WOOD))
 reg(cylinder("TableLeg", (0, 0, 0.36), 0.09, 0.72, WOOD_DARK))
@@ -466,14 +481,17 @@ def area_light(name, loc, color, energy, size, rot, shadow=False):
     return o
 
 
-# key hangat dari arah kamera twoshot (+X), fill hangat dari atas, rim dingin dari backdrop
+# key hangat dari arah kamera twoshot (+X), fill hangat dari atas, rim MERAH dari backdrop
 area_light("KeyWarm", (2.2, 0, 2.2), (1.0, 0.82, 0.60), 220.0, 1.6, (math.radians(55), 0, math.radians(-90)))
-area_light("FillTop", (0, 0, 3.0), (1.0, 0.95, 0.85), 120.0, 2.0, (math.radians(10), 0, 0))
-point_light("RimCool", (-1.6, 0, 2.0), (0.45, 0.65, 1.0), 120.0)
+area_light("FillTop", (0, 0, 3.0), (0.95, 0.75, 0.72), 80.0, 2.0, (math.radians(10), 0, 0))
+point_light("RimRed", (-1.6, 0, 2.0), (1.0, 0.10, 0.12), 220.0)
 point_light("FaceWarm", (1.2, 0, 1.4), (1.0, 0.85, 0.65), 60.0)
-# softbox panel emissive (terlihat di frame pinggir)
-reg(block("SoftboxL", (2.4, -1.4, 2.0), (0.08, 0.9, 1.2), emissive("SoftboxM", (1.0, 0.95, 0.85), 2.0)))
-reg(block("SoftboxR", (2.4, 1.4, 2.0), (0.08, 0.9, 1.2), emissive("SoftboxM2", (1.0, 0.95, 0.85), 2.0)))
+# v2: semburan merah dari kolom — membasuh backdrop
+point_light("WashL", (-1.7, -2.2, 2.4), (1.0, 0.08, 0.08), 90.0)
+point_light("WashR", (-1.7, 2.2, 2.4), (1.0, 0.08, 0.08), 90.0)
+# softbox panel emissive (terlihat di frame pinggir) — v2 merah
+reg(block("SoftboxL", (2.4, -1.4, 2.0), (0.08, 0.9, 1.2), emissive("SoftboxM", (1.0, 0.22, 0.18), 2.0)))
+reg(block("SoftboxR", (2.4, 1.4, 2.0), (0.08, 0.9, 1.2), emissive("SoftboxM2", (1.0, 0.22, 0.18), 2.0)))
 
 # subsurf 1 karakter (bukan detail pipih)
 for _info in CHARS.values():
