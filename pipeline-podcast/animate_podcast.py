@@ -56,6 +56,9 @@ if ENGINE == "cycles":
     scene.cycles.denoiser = "OPENIMAGEDENOISE"
     _cprefs = bpy.context.preferences.addons["cycles"].preferences
     _cprefs.compute_device_type = "CUDA"
+    _cprefs.get_devices()  # WAJIB: tanpa ini daftar devices masih berisi
+    # tipe default (OPTIX) sehingga _d.type == "CUDA" False semua -> CPU
+    # fallback ~50 dtk/frame (probe 21 Nov: util GPU 0% di 484 sampel).
     for _d in _cprefs.devices:
         _d.use = _d.type == "CUDA"
     print("CYCLES DEVICES:", [(d.name, d.type, d.use) for d in _cprefs.devices], flush=True)
